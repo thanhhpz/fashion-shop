@@ -1,0 +1,779 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model administrative_regions {
+  id           Int     @id
+  name         String  @db.VarChar(255)
+  name_en      String  @db.VarChar(255)
+  code_name    String? @db.VarChar(255)
+  code_name_en String? @db.VarChar(255)
+}
+
+model administrative_units {
+  id            Int         @id
+  full_name     String?     @db.VarChar(255)
+  full_name_en  String?     @db.VarChar(255)
+  short_name    String?     @db.VarChar(255)
+  short_name_en String?     @db.VarChar(255)
+  code_name     String?     @db.VarChar(255)
+  code_name_en  String?     @db.VarChar(255)
+  provinces     provinces[]
+  wards         wards[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model anh_san_pham {
+  id                   Int                @id @default(autoincrement())
+  san_pham_id          Int?
+  bien_the_san_pham_id Int?
+  duong_dan            String             @db.VarChar(255)
+  la_anh_chinh         Boolean?           @default(false)
+  thu_tu               Int?               @default(0)
+  bien_the_san_pham    bien_the_san_pham? @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_anh_bien_the")
+  san_pham             san_pham?          @relation(fields: [san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_anh_san_pham")
+
+  @@index([bien_the_san_pham_id], map: "idx_anh_bien_the")
+  @@index([san_pham_id], map: "idx_anh_san_pham")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model bien_the_san_pham {
+  id                    Int                     @id @default(autoincrement())
+  san_pham_id           Int
+  kich_co_id            Int?
+  mau_id                Int?
+  variant_name          String?                 @db.VarChar(255)
+  gia_ban               Int
+  gia_nhap              Int
+  gia_niem_yet          Int
+  sku                   String?                 @unique @db.VarChar(50)
+  trang_thai            String?                 @default("Còn hàng") @db.VarChar(20)
+  created_at            DateTime?               @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?               @default(now()) @db.Timestamp(6)
+  anh_san_pham          anh_san_pham[]
+  kich_co               kich_co?                @relation(fields: [kich_co_id], references: [id], onUpdate: NoAction, map: "fk_btsp_kich_co")
+  mau_sac               mau_sac?                @relation(fields: [mau_id], references: [id], onUpdate: NoAction, map: "fk_btsp_mau_sac")
+  san_pham              san_pham                @relation(fields: [san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_btsp_san_pham")
+  chi_tiet_don_hang     chi_tiet_don_hang[]
+  chi_tiet_gio_hang     chi_tiet_gio_hang[]
+  chi_tiet_gio_hang_tam chi_tiet_gio_hang_tam[]
+  chi_tiet_phieu_nhap   chi_tiet_phieu_nhap[]
+  chi_tiet_yeu_thich    chi_tiet_yeu_thich[]
+  danh_gia_san_pham     danh_gia_san_pham[]
+  gia_khuyen_mai        gia_khuyen_mai[]
+  giu_hang_ton_kho      giu_hang_ton_kho[]
+  lich_su_gia_san_pham  lich_su_gia_san_pham[]
+  lich_su_ton_kho       lich_su_ton_kho[]
+  ton_kho               ton_kho?
+
+  @@unique([san_pham_id, kich_co_id, mau_id], map: "unique_san_pham_bien_the")
+  @@index([kich_co_id], map: "idx_btsp_kich_co")
+  @@index([mau_id], map: "idx_btsp_mau")
+  @@index([san_pham_id], map: "idx_btsp_san_pham")
+  @@index([san_pham_id, kich_co_id], map: "idx_btsp_san_pham_kich_co")
+  @@index([san_pham_id, mau_id], map: "idx_btsp_san_pham_mau")
+  @@index([sku], map: "idx_btsp_sku")
+  @@index([trang_thai], map: "idx_btsp_trang_thai")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chi_tiet_don_hang {
+  id                    Int                 @id @default(autoincrement())
+  don_hang_id           Int
+  bien_the_san_pham_id  Int
+  so_luong              Int
+  gia_ban_tai_thoi_diem Int
+  giam_gia              Int?                @default(0)
+  thanh_tien            Int
+  ten_bien_the          String?             @db.VarChar(255)
+  ma_sku                String?             @db.VarChar(50)
+  hinh_anh              String?             @db.VarChar(255)
+  created_at            DateTime?           @default(now()) @db.Timestamp(6)
+  bien_the_san_pham     bien_the_san_pham   @relation(fields: [bien_the_san_pham_id], references: [id], onUpdate: NoAction, map: "fk_ctdh_bien_the")
+  don_hang              don_hang            @relation(fields: [don_hang_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ctdh_don_hang")
+  danh_gia_san_pham     danh_gia_san_pham[]
+
+  @@index([bien_the_san_pham_id], map: "idx_ctdh_bien_the")
+  @@index([don_hang_id], map: "idx_ctdh_don_hang")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chi_tiet_gio_hang {
+  id                   Int               @id @default(autoincrement())
+  gio_hang_id          Int
+  bien_the_san_pham_id Int
+  so_luong             Int               @default(1)
+  is_selected          Boolean?          @default(true)
+  created_at           DateTime?         @default(now()) @db.Timestamp(6)
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ctgh_bien_the")
+  gio_hang             gio_hang          @relation(fields: [gio_hang_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ctgh_gio_hang")
+
+  @@unique([gio_hang_id, bien_the_san_pham_id], map: "unique_gio_hang_bien_the")
+  @@index([bien_the_san_pham_id], map: "idx_ctgh_bien_the")
+  @@index([gio_hang_id], map: "idx_ctgh_gio_hang")
+  @@index([is_selected], map: "idx_ctgh_is_selected")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chi_tiet_gio_hang_tam {
+  id                   Int               @id @default(autoincrement())
+  gio_hang_tam_id      String            @db.VarChar(255)
+  bien_the_san_pham_id Int
+  so_luong             Int               @default(1)
+  is_selected          Boolean?          @default(true)
+  created_at           DateTime?         @default(now()) @db.Timestamp(6)
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ctght_bien_the")
+  gio_hang_tam         gio_hang_tam      @relation(fields: [gio_hang_tam_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ctght_gio_hang_tam")
+
+  @@unique([gio_hang_tam_id, bien_the_san_pham_id], map: "unique_gio_hang_tam_bien_the")
+  @@index([bien_the_san_pham_id], map: "idx_ctght_bien_the")
+  @@index([gio_hang_tam_id], map: "idx_ctght_gio_hang_tam")
+  @@index([is_selected], map: "idx_ctght_is_selected")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chi_tiet_phieu_nhap {
+  id                   Int               @id @default(autoincrement())
+  phieu_nhap_kho_id    Int
+  bien_the_san_pham_id Int
+  so_luong             Int
+  gia_nhap             Int
+  thanh_tien           Int
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onUpdate: NoAction, map: "fk_ctpn_bien_the")
+  phieu_nhap_kho       phieu_nhap_kho    @relation(fields: [phieu_nhap_kho_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ctpn_phieu_nhap")
+
+  @@index([bien_the_san_pham_id], map: "idx_ctpn_bien_the")
+  @@index([phieu_nhap_kho_id], map: "idx_ctpn_phieu_nhap")
+}
+
+model chi_tiet_yeu_thich {
+  id                   Int               @id @default(autoincrement())
+  yeu_thich_id         Int
+  bien_the_san_pham_id Int
+  created_at           DateTime?         @default(now()) @db.Timestamp(6)
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ctyt_bien_the")
+  yeu_thich            yeu_thich         @relation(fields: [yeu_thich_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ctyt_yeu_thich")
+
+  @@unique([yeu_thich_id, bien_the_san_pham_id], map: "unique_yeu_thich_bien_the")
+  @@index([bien_the_san_pham_id], map: "idx_chi_tiet_yeu_thich_bien_the")
+  @@index([yeu_thich_id], map: "idx_chi_tiet_yeu_thich_yeu_thich")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model danh_gia_san_pham {
+  id                   Int                @id @default(autoincrement())
+  nguoi_dung_id        Int
+  san_pham_id          Int
+  bien_the_san_pham_id Int?
+  chi_tiet_don_hang_id Int
+  danh_gia             Int
+  binh_luan            String?
+  hinh_anh             String?            @db.VarChar(255)
+  trang_thai           String?            @default("Chờ duyệt") @db.VarChar(20)
+  created_at           DateTime?          @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?          @default(now()) @db.Timestamp(6)
+  bien_the_san_pham    bien_the_san_pham? @relation(fields: [bien_the_san_pham_id], references: [id], onUpdate: NoAction, map: "fk_dgsp_bien_the")
+  chi_tiet_don_hang    chi_tiet_don_hang  @relation(fields: [chi_tiet_don_hang_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_dgsp_chi_tiet_don_hang")
+  nguoi_dung           nguoi_dung         @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_dgsp_nguoi_dung")
+  san_pham             san_pham           @relation(fields: [san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_dgsp_san_pham")
+
+  @@unique([nguoi_dung_id, chi_tiet_don_hang_id], map: "unique_danh_gia")
+  @@index([bien_the_san_pham_id], map: "idx_danh_gia_bien_the")
+  @@index([chi_tiet_don_hang_id], map: "idx_danh_gia_chi_tiet_don_hang")
+  @@index([danh_gia], map: "idx_danh_gia_danh_gia")
+  @@index([nguoi_dung_id], map: "idx_danh_gia_nguoi_dung")
+  @@index([san_pham_id], map: "idx_danh_gia_san_pham")
+  @@index([trang_thai], map: "idx_danh_gia_trang_thai")
+}
+
+model danh_muc {
+  id               Int                @id @default(autoincrement())
+  ten_danh_muc     String             @db.VarChar(255)
+  mo_ta            String?
+  slug             String             @unique @db.VarChar(255)
+  danh_muc_cha_id  Int?
+  trang_thai       Boolean?           @default(true)
+  meta_title       String?            @db.VarChar(255)
+  meta_description String?
+  meta_keywords    String?            @db.VarChar(255)
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?          @default(now()) @db.Timestamp(6)
+  deleted_at       DateTime?          @db.Timestamp(6)
+  danh_muc         danh_muc?          @relation("danh_mucTodanh_muc", fields: [danh_muc_cha_id], references: [id], onUpdate: NoAction, map: "fk_danh_muc_cha")
+  other_danh_muc   danh_muc[]         @relation("danh_mucTodanh_muc")
+  san_pham         san_pham[]
+  voucher_danh_muc voucher_danh_muc[]
+
+  @@index([danh_muc_cha_id], map: "idx_danh_muc_cha")
+  @@index([slug], map: "idx_danh_muc_slug")
+}
+
+model dia_chi {
+  id                       Int        @id @default(autoincrement())
+  nguoi_dung_id            Int
+  is_default               Boolean?   @default(false)
+  province_code            String?    @db.VarChar(20)
+  ward_code                String?    @db.VarChar(20)
+  dia_chi_chi_tiet         String?    @db.VarChar(255)
+  ho_ten_nguoi_nhan        String?    @db.VarChar(100)
+  so_dien_thoai_nguoi_nhan String?    @db.VarChar(20)
+  ten_dia_chi              String?    @db.VarChar(100)
+  latitude                 Decimal?   @db.Decimal(10, 8)
+  longitude                Decimal?   @db.Decimal(11, 8)
+  place_id                 String?    @db.VarChar(255)
+  created_at               DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at               DateTime?  @default(now()) @db.Timestamp(6)
+  nguoi_dung               nguoi_dung @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_dia_chi_nguoi_dung")
+  provinces                provinces? @relation(fields: [province_code], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "fk_dia_chi_province")
+  wards                    wards?     @relation(fields: [ward_code], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "fk_dia_chi_ward")
+
+  @@index([nguoi_dung_id], map: "idx_dia_chi_nguoi_dung")
+  @@index([province_code], map: "idx_dia_chi_province")
+  @@index([ward_code], map: "idx_dia_chi_ward")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model don_hang {
+  id                        Int                      @id @default(autoincrement())
+  ma_don_hang               String                   @unique @db.VarChar(50)
+  nguoi_dung_id             Int
+  ma_giam_gia_id            Int?
+  phuong_thuc_thanh_toan_id Int
+  don_vi_van_chuyen_id      Int?
+  tong_tien_hang            Int
+  tong_giam_gia             Int?                     @default(0)
+  phi_van_chuyen            Int?                     @default(0)
+  tong_thanh_toan           Int
+  ma_van_don                String?                  @db.VarChar(100)
+  ghi_chu                   String?                  @db.VarChar(255)
+  trang_thai_don            String?                  @default("Chờ xác nhận") @db.VarChar(30)
+  trang_thai_thanh_toan     String?                  @default("Chưa thanh toán") @db.VarChar(20)
+  ngay_dat                  DateTime                 @db.Date
+  ngay_giao_du_kien         DateTime?                @db.Date
+  ngay_giao_thuc_te         DateTime?                @db.Timestamp(6)
+  ho_ten_nguoi_nhan         String                   @db.VarChar(100)
+  so_dien_thoai_nguoi_nhan  String                   @db.VarChar(20)
+  dia_chi_giao_hang         String
+  province_code             String?                  @db.VarChar(20)
+  ward_code                 String?                  @db.VarChar(20)
+  created_at                DateTime?                @default(now()) @db.Timestamp(6)
+  updated_at                DateTime?                @default(now()) @db.Timestamp(6)
+  chi_tiet_don_hang         chi_tiet_don_hang[]
+  don_vi_van_chuyen         don_vi_van_chuyen?       @relation(fields: [don_vi_van_chuyen_id], references: [id], onUpdate: NoAction, map: "fk_dh_don_vi_van_chuyen")
+  ma_giam_gia               ma_giam_gia?             @relation(fields: [ma_giam_gia_id], references: [id], onUpdate: NoAction, map: "fk_dh_ma_giam_gia")
+  nguoi_dung                nguoi_dung               @relation(fields: [nguoi_dung_id], references: [id], onUpdate: NoAction, map: "fk_dh_nguoi_dung")
+  phuong_thuc_thanh_toan    phuong_thuc_thanh_toan   @relation(fields: [phuong_thuc_thanh_toan_id], references: [id], onUpdate: NoAction, map: "fk_dh_phuong_thuc_thanh_toan")
+  giu_hang_ton_kho          giu_hang_ton_kho[]
+  khoa_dat_hang             khoa_dat_hang[]
+  lich_su_ton_kho           lich_su_ton_kho[]
+  lich_su_trang_thai_don    lich_su_trang_thai_don[]
+  thanh_toan                thanh_toan[]
+  voucher_usage             voucher_usage[]
+
+  @@index([ma_don_hang], map: "idx_don_hang_ma")
+  @@index([ngay_dat], map: "idx_don_hang_ngay_dat")
+  @@index([nguoi_dung_id], map: "idx_don_hang_nguoi_dung")
+  @@index([nguoi_dung_id, ngay_dat], map: "idx_don_hang_nguoi_dung_ngay")
+  @@index([trang_thai_don], map: "idx_don_hang_trang_thai")
+}
+
+model don_vi_van_chuyen {
+  id          Int        @id @default(autoincrement())
+  ten_don_vi  String     @db.VarChar(100)
+  ma_viet_tat String?    @unique @db.VarChar(20)
+  website     String?    @db.VarChar(255)
+  trang_thai  Boolean?   @default(true)
+  don_hang    don_hang[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model gia_khuyen_mai {
+  id                   Int               @id @default(autoincrement())
+  bien_the_san_pham_id Int
+  gia_khuyen_mai       Int
+  so_luong_gioi_han    Int?
+  ngay_bat_dau         DateTime          @db.Timestamp(6)
+  ngay_ket_thuc        DateTime          @db.Timestamp(6)
+  trang_thai           String?           @default("Hoạt động") @db.VarChar(20)
+  created_at           DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?         @default(now()) @db.Timestamp(6)
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_gkm_bien_the")
+
+  @@index([bien_the_san_pham_id], map: "idx_gkm_bien_the")
+  @@index([ngay_bat_dau, ngay_ket_thuc], map: "idx_gkm_ngay")
+  @@index([trang_thai], map: "idx_gkm_trang_thai")
+}
+
+model gio_hang {
+  id                Int                 @id @default(autoincrement())
+  nguoi_dung_id     Int                 @unique
+  ma_gio_hang       String              @unique @default(dbgenerated("(gen_random_uuid())::character varying")) @db.VarChar(36)
+  last_activity_at  DateTime?           @default(now()) @db.Timestamp(6)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  chi_tiet_gio_hang chi_tiet_gio_hang[]
+  nguoi_dung        nguoi_dung          @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_gh_nguoi_dung")
+
+  @@index([last_activity_at], map: "idx_gio_hang_last_activity")
+  @@index([ma_gio_hang], map: "idx_gio_hang_ma")
+  @@index([nguoi_dung_id], map: "idx_gio_hang_nguoi_dung")
+}
+
+model gio_hang_tam {
+  id                    String                  @id @default(dbgenerated("(gen_random_uuid())::character varying")) @db.VarChar(255)
+  session_id            String                  @unique @db.VarChar(255)
+  expires_at            DateTime                @db.Timestamp(6)
+  created_at            DateTime?               @default(now()) @db.Timestamp(6)
+  chi_tiet_gio_hang_tam chi_tiet_gio_hang_tam[]
+
+  @@index([expires_at], map: "idx_gio_hang_tam_expires")
+  @@index([session_id], map: "idx_gio_hang_tam_session")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model giu_hang_ton_kho {
+  id                   Int               @id @default(autoincrement())
+  nguoi_dung_id        Int
+  bien_the_san_pham_id Int
+  so_luong             Int
+  don_hang_id          Int?
+  thoi_gian_het_han    DateTime          @db.Timestamp(6)
+  trang_thai           String?           @default("CHO_THANH_TOAN") @db.VarChar(20)
+  created_at           DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?         @default(now()) @db.Timestamp(6)
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ghtk_bien_the")
+  don_hang             don_hang?         @relation(fields: [don_hang_id], references: [id], onUpdate: NoAction, map: "fk_ghtk_don_hang")
+  nguoi_dung           nguoi_dung        @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ghtk_nguoi_dung")
+  lich_su_ton_kho      lich_su_ton_kho[]
+
+  @@index([bien_the_san_pham_id], map: "idx_giu_hang_ton_kho_bien_the")
+  @@index([thoi_gian_het_han], map: "idx_giu_hang_ton_kho_het_han")
+  @@index([nguoi_dung_id], map: "idx_giu_hang_ton_kho_nguoi_dung")
+  @@index([trang_thai], map: "idx_giu_hang_ton_kho_trang_thai")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model khoa_dat_hang {
+  id            String     @id @default(dbgenerated("(gen_random_uuid())::character varying")) @db.VarChar(255)
+  key           String     @unique @db.VarChar(255)
+  nguoi_dung_id Int
+  don_hang_id   Int?
+  status        String?    @default("PENDING") @db.VarChar(20)
+  payload       Json
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  expires_at    DateTime   @db.Timestamp(6)
+  don_hang      don_hang?  @relation(fields: [don_hang_id], references: [id], onUpdate: NoAction, map: "fk_kdh_don_hang")
+  nguoi_dung    nguoi_dung @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_kdh_nguoi_dung")
+
+  @@index([expires_at], map: "idx_khoa_dat_hang_expires")
+  @@index([key], map: "idx_khoa_dat_hang_key")
+  @@index([nguoi_dung_id], map: "idx_khoa_dat_hang_user")
+}
+
+model kich_co {
+  id                Int                 @id @default(autoincrement())
+  ten_kich_co       String              @unique @db.VarChar(50)
+  mo_ta             String?             @db.VarChar(255)
+  trang_thai        Boolean?            @default(true)
+  bien_the_san_pham bien_the_san_pham[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model lich_su_gia_san_pham {
+  id                   Int               @id @default(autoincrement())
+  bien_the_san_pham_id Int
+  gia_cu               Int
+  gia_moi              Int
+  ly_do_thay_doi       String?           @db.VarChar(255)
+  thoi_gian            DateTime?         @default(now()) @db.Timestamp(6)
+  nguoi_thay_doi       Int?
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_lsgsp_bien_the")
+  nguoi_dung           nguoi_dung?       @relation(fields: [nguoi_thay_doi], references: [id], onUpdate: NoAction, map: "fk_lsgsp_nguoi_thay_doi")
+
+  @@index([bien_the_san_pham_id], map: "idx_lsgsp_bien_the")
+  @@index([thoi_gian], map: "idx_lsgsp_thoi_gian")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model lich_su_ton_kho {
+  id                   Int               @id @default(autoincrement())
+  bien_the_san_pham_id Int
+  so_luong_thay_doi    Int
+  so_luong_ton_sau     Int
+  loai_thay_doi        String?           @db.VarChar(30)
+  ghi_chu              String?           @db.VarChar(255)
+  phieu_nhap_kho_id    Int?
+  don_hang_id          Int?
+  dat_cho_id           Int?
+  thoi_gian            DateTime?         @default(now()) @db.Timestamp(6)
+  nguoi_thuc_hien      Int?
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_lstk_bien_the")
+  giu_hang_ton_kho     giu_hang_ton_kho? @relation(fields: [dat_cho_id], references: [id], onUpdate: NoAction, map: "fk_lstk_dat_cho")
+  don_hang             don_hang?         @relation(fields: [don_hang_id], references: [id], onUpdate: NoAction, map: "fk_lstk_don_hang")
+  nguoi_dung           nguoi_dung?       @relation(fields: [nguoi_thuc_hien], references: [id], onUpdate: NoAction, map: "fk_lstk_nguoi_thuc_hien")
+  phieu_nhap_kho       phieu_nhap_kho?   @relation(fields: [phieu_nhap_kho_id], references: [id], onUpdate: NoAction, map: "fk_lstk_phieu_nhap")
+
+  @@index([bien_the_san_pham_id], map: "idx_lich_su_ton_kho_bien_the")
+  @@index([loai_thay_doi], map: "idx_lich_su_ton_kho_loai")
+  @@index([thoi_gian], map: "idx_lich_su_ton_kho_thoi_gian")
+}
+
+model lich_su_trang_thai_don {
+  id             Int       @id @default(autoincrement())
+  don_hang_id    Int
+  trang_thai_cu  String?   @db.VarChar(50)
+  trang_thai_moi String    @db.VarChar(50)
+  ghi_chu        String?   @db.VarChar(255)
+  nguoi_thay_doi String?   @db.VarChar(100)
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+  don_hang       don_hang  @relation(fields: [don_hang_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_lsttd_don_hang")
+
+  @@index([created_at], map: "idx_lsttd_created")
+  @@index([don_hang_id], map: "idx_lsttd_don_hang")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ma_giam_gia {
+  id                    Int                  @id @default(autoincrement())
+  ma_code               String               @unique @db.VarChar(50)
+  mo_ta                 String?              @db.VarChar(255)
+  loai_giam             String               @db.VarChar(20)
+  gia_tri_giam          Int
+  dieu_kien_toi_thieu   Int?                 @default(0)
+  giam_toi_da           Int?
+  ap_dung_cho           String?              @default("TAT_CA") @db.VarChar(20)
+  so_lan_su_dung_toi_da Int?                 @default(1)
+  so_luong              Int?                 @default(0)
+  so_luong_da_dung      Int?                 @default(0)
+  ngay_bat_dau          DateTime             @db.Timestamp(6)
+  ngay_ket_thuc         DateTime             @db.Timestamp(6)
+  trang_thai            String?              @default("Chưa kích hoạt") @db.VarChar(20)
+  created_at            DateTime?            @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?            @default(now()) @db.Timestamp(6)
+  deleted_at            DateTime?            @db.Timestamp(6)
+  don_hang              don_hang[]
+  voucher_danh_muc      voucher_danh_muc[]
+  voucher_khach_hang    voucher_khach_hang[]
+  voucher_san_pham      voucher_san_pham[]
+  voucher_usage         voucher_usage[]
+
+  @@index([ma_code], map: "idx_ma_giam_gia_code")
+  @@index([ngay_bat_dau, ngay_ket_thuc], map: "idx_ma_giam_gia_ngay")
+  @@index([trang_thai], map: "idx_ma_giam_gia_trang_thai")
+}
+
+model mau_sac {
+  id                Int                 @id @default(autoincrement())
+  ten_mau           String              @unique @db.VarChar(50)
+  ma_hex            String              @db.VarChar(7)
+  mo_ta             String?             @db.VarChar(255)
+  trang_thai        Boolean?            @default(true)
+  bien_the_san_pham bien_the_san_pham[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model nguoi_dung {
+  id                    Int                     @id @default(autoincrement())
+  ho_ten                String                  @db.VarChar(100)
+  email                 String                  @unique @db.VarChar(100)
+  so_dien_thoai         String?                 @unique @db.VarChar(20)
+  mat_khau              String                  @db.VarChar(255)
+  ngay_sinh             DateTime?               @db.Date
+  gioi_tinh             String?                 @db.VarChar(10)
+  avatar                String?                 @db.VarChar(255)
+  trang_thai            String?                 @default("Hoạt động") @db.VarChar(20)
+  created_at            DateTime?               @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?               @default(now()) @db.Timestamp(6)
+  deleted_at            DateTime?               @db.Timestamp(6)
+  danh_gia_san_pham     danh_gia_san_pham[]
+  dia_chi               dia_chi[]
+  don_hang              don_hang[]
+  gio_hang              gio_hang?
+  giu_hang_ton_kho      giu_hang_ton_kho[]
+  khoa_dat_hang         khoa_dat_hang[]
+  lich_su_gia_san_pham  lich_su_gia_san_pham[]
+  lich_su_ton_kho       lich_su_ton_kho[]
+  phan_quyen_nguoi_dung phan_quyen_nguoi_dung[]
+  phieu_nhap_kho        phieu_nhap_kho[]
+  voucher_khach_hang    voucher_khach_hang[]
+  voucher_usage         voucher_usage[]
+  yeu_thich             yeu_thich?
+
+  @@index([email], map: "idx_nguoi_dung_email")
+  @@index([so_dien_thoai], map: "idx_nguoi_dung_so_dien_thoai")
+  @@index([trang_thai], map: "idx_nguoi_dung_trang_thai")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model nha_cung_cap {
+  id               Int              @id @default(autoincrement())
+  ten_nha_cung_cap String           @db.VarChar(200)
+  dia_chi          String?          @db.VarChar(255)
+  dien_thoai       String?          @db.VarChar(20)
+  email            String?          @db.VarChar(100)
+  ma_so_thue       String?          @db.VarChar(50)
+  trang_thai       String?          @default("Đang hợp tác") @db.VarChar(20)
+  created_at       DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?        @default(now()) @db.Timestamp(6)
+  deleted_at       DateTime?        @db.Timestamp(6)
+  phieu_nhap_kho   phieu_nhap_kho[]
+}
+
+model phan_quyen_nguoi_dung {
+  id            Int        @id @default(autoincrement())
+  nguoi_dung_id Int
+  vai_tro_id    Int
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  nguoi_dung    nguoi_dung @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pqnd_nguoi_dung")
+  vai_tro       vai_tro    @relation(fields: [vai_tro_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pqnd_vai_tro")
+
+  @@unique([nguoi_dung_id, vai_tro_id], map: "unique_nguoi_dung_vai_tro")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model phieu_nhap_kho {
+  id                  Int                   @id @default(autoincrement())
+  ma_phieu            String                @unique @db.VarChar(50)
+  nha_cung_cap_id     Int
+  nguoi_nhap_id       Int
+  tong_tien           Int
+  ghi_chu             String?               @db.VarChar(255)
+  trang_thai          String?               @default("Nháp") @db.VarChar(20)
+  ngay_nhap           DateTime              @db.Date
+  created_at          DateTime?             @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?             @default(now()) @db.Timestamp(6)
+  chi_tiet_phieu_nhap chi_tiet_phieu_nhap[]
+  lich_su_ton_kho     lich_su_ton_kho[]
+  nguoi_dung          nguoi_dung            @relation(fields: [nguoi_nhap_id], references: [id], onUpdate: NoAction, map: "fk_pnk_nguoi_nhap")
+  nha_cung_cap        nha_cung_cap          @relation(fields: [nha_cung_cap_id], references: [id], onUpdate: NoAction, map: "fk_pnk_nha_cung_cap")
+
+  @@index([ma_phieu], map: "idx_phieu_nhap_ma")
+  @@index([nha_cung_cap_id], map: "idx_phieu_nhap_nha_cung_cap")
+  @@index([trang_thai], map: "idx_phieu_nhap_trang_thai")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model phuong_thuc_thanh_toan {
+  id              Int          @id @default(autoincrement())
+  ten_phuong_thuc String       @unique @db.VarChar(100)
+  mo_ta           String?      @db.VarChar(255)
+  phi_giao_dich   Int?         @default(0)
+  trang_thai      String?      @default("Hoạt động") @db.VarChar(20)
+  don_hang        don_hang[]
+  thanh_toan      thanh_toan[]
+}
+
+model provinces {
+  code                   String                @id @db.VarChar(20)
+  name                   String                @db.VarChar(255)
+  name_en                String?               @db.VarChar(255)
+  full_name              String                @db.VarChar(255)
+  full_name_en           String?               @db.VarChar(255)
+  code_name              String?               @db.VarChar(255)
+  administrative_unit_id Int?
+  dia_chi                dia_chi[]
+  administrative_units   administrative_units? @relation(fields: [administrative_unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  wards                  wards[]
+
+  @@index([administrative_unit_id], map: "idx_provinces_unit")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model san_pham {
+  id                Int                 @id @default(autoincrement())
+  ten_san_pham      String              @db.VarChar(255)
+  mo_ta             String?
+  mo_ta_ngan        String?
+  thuong_hieu_id    Int?
+  danh_muc_id       Int
+  slug              String              @unique @db.VarChar(255)
+  trong_luong       Decimal?            @db.Decimal(10, 2)
+  trang_thai        String?             @default("Đang bán") @db.VarChar(20)
+  luot_xem          Int?                @default(0)
+  noi_bat           Boolean?            @default(false)
+  meta_title        String?             @db.VarChar(255)
+  meta_description  String?
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime?           @default(now()) @db.Timestamp(6)
+  deleted_at        DateTime?           @db.Timestamp(6)
+  anh_san_pham      anh_san_pham[]
+  bien_the_san_pham bien_the_san_pham[]
+  danh_gia_san_pham danh_gia_san_pham[]
+  danh_muc          danh_muc            @relation(fields: [danh_muc_id], references: [id], onUpdate: NoAction, map: "fk_sp_danh_muc")
+  thuong_hieu       thuong_hieu?        @relation(fields: [thuong_hieu_id], references: [id], onUpdate: NoAction, map: "fk_sp_thuong_hieu")
+  san_pham_tags     san_pham_tags[]
+  voucher_san_pham  voucher_san_pham[]
+
+  @@index([danh_muc_id], map: "idx_san_pham_danh_muc")
+  @@index([slug], map: "idx_san_pham_slug")
+  @@index([thuong_hieu_id], map: "idx_san_pham_thuong_hieu")
+  @@index([trang_thai], map: "idx_san_pham_trang_thai")
+}
+
+model san_pham_tags {
+  id          Int      @id @default(autoincrement())
+  san_pham_id Int
+  tag_id      Int
+  san_pham    san_pham @relation(fields: [san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_spt_san_pham")
+  tags        tags     @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_spt_tags")
+
+  @@unique([san_pham_id, tag_id], map: "unique_san_pham_tag")
+}
+
+model tags {
+  id            Int             @id @default(autoincrement())
+  ten_tag       String          @unique @db.VarChar(100)
+  mo_ta         String?         @db.VarChar(255)
+  san_pham_tags san_pham_tags[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model thanh_toan {
+  id                        Int                      @id @default(autoincrement())
+  don_hang_id               Int
+  phuong_thuc_thanh_toan_id Int
+  ma_giao_dich              String?                  @unique @db.VarChar(100)
+  so_tien                   Int
+  trang_thai                String?                  @default("Chờ xử lý") @db.VarChar(20)
+  noi_dung                  String?                  @db.VarChar(255)
+  ngay_giao_dich            DateTime?                @default(now()) @db.Timestamp(6)
+  created_at                DateTime?                @default(now()) @db.Timestamp(6)
+  don_hang                  don_hang                 @relation(fields: [don_hang_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tt_don_hang")
+  phuong_thuc_thanh_toan    phuong_thuc_thanh_toan   @relation(fields: [phuong_thuc_thanh_toan_id], references: [id], onUpdate: NoAction, map: "fk_tt_phuong_thuc")
+  thanh_toan_transaction    thanh_toan_transaction[]
+
+  @@index([don_hang_id], map: "idx_thanh_toan_don_hang")
+  @@index([ma_giao_dich], map: "idx_thanh_toan_ma_giao_dich")
+  @@index([trang_thai], map: "idx_thanh_toan_trang_thai")
+  @@index([trang_thai, ngay_giao_dich], map: "idx_thanh_toan_trang_thai_ngay")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model thanh_toan_transaction {
+  id                    Int        @id @default(autoincrement())
+  thanh_toan_id         Int
+  ma_giao_dich          String?    @db.VarChar(100)
+  so_tien               Int
+  trang_thai            String?    @db.VarChar(20)
+  phan_hoi_tu_ngan_hang Json?
+  created_at            DateTime?  @default(now()) @db.Timestamp(6)
+  thanh_toan            thanh_toan @relation(fields: [thanh_toan_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ttt_thanh_toan")
+
+  @@index([thanh_toan_id], map: "idx_thanh_toan_transaction_thanh_toan")
+}
+
+model thuong_hieu {
+  id              Int        @id @default(autoincrement())
+  ten_thuong_hieu String     @db.VarChar(255)
+  logo            String?    @db.VarChar(255)
+  mo_ta           String?
+  trang_thai      Boolean?   @default(true)
+  created_at      DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?  @default(now()) @db.Timestamp(6)
+  deleted_at      DateTime?  @db.Timestamp(6)
+  san_pham        san_pham[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ton_kho {
+  id                   Int               @id @default(autoincrement())
+  bien_the_san_pham_id Int               @unique(map: "unique_ton_kho_bien_the")
+  so_luong_ton         Int?              @default(0)
+  so_luong_cho_xuat    Int?              @default(0)
+  so_luong_toi_thieu   Int?              @default(0)
+  ngay_cap_nhat        DateTime?         @default(now()) @db.Timestamp(6)
+  bien_the_san_pham    bien_the_san_pham @relation(fields: [bien_the_san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ton_kho_bien_the")
+
+  @@index([bien_the_san_pham_id], map: "idx_ton_kho_bien_the")
+}
+
+model vai_tro {
+  id                    Int                     @id @default(autoincrement())
+  ten_vai_tro           String                  @unique @db.VarChar(50)
+  mo_ta                 String?                 @db.VarChar(255)
+  trang_thai            Boolean?                @default(true)
+  phan_quyen_nguoi_dung phan_quyen_nguoi_dung[]
+}
+
+model voucher_danh_muc {
+  id             Int         @id @default(autoincrement())
+  ma_giam_gia_id Int
+  danh_muc_id    Int
+  danh_muc       danh_muc    @relation(fields: [danh_muc_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vdm_danh_muc")
+  ma_giam_gia    ma_giam_gia @relation(fields: [ma_giam_gia_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vdm_ma_giam_gia")
+
+  @@unique([ma_giam_gia_id, danh_muc_id], map: "unique_voucher_danh_muc")
+  @@index([ma_giam_gia_id, danh_muc_id], map: "idx_voucher_danh_muc")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model voucher_khach_hang {
+  id             Int         @id @default(autoincrement())
+  ma_giam_gia_id Int
+  nguoi_dung_id  Int
+  so_lan_da_dung Int?        @default(0)
+  ma_giam_gia    ma_giam_gia @relation(fields: [ma_giam_gia_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vkh_ma_giam_gia")
+  nguoi_dung     nguoi_dung  @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vkh_nguoi_dung")
+
+  @@unique([ma_giam_gia_id, nguoi_dung_id], map: "unique_voucher_khach_hang")
+  @@index([ma_giam_gia_id, nguoi_dung_id], map: "idx_voucher_khach_hang")
+}
+
+model voucher_san_pham {
+  id             Int         @id @default(autoincrement())
+  ma_giam_gia_id Int
+  san_pham_id    Int
+  ma_giam_gia    ma_giam_gia @relation(fields: [ma_giam_gia_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vsp_ma_giam_gia")
+  san_pham       san_pham    @relation(fields: [san_pham_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vsp_san_pham")
+
+  @@unique([ma_giam_gia_id, san_pham_id], map: "unique_voucher_san_pham")
+  @@index([ma_giam_gia_id, san_pham_id], map: "idx_voucher_san_pham")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model voucher_usage {
+  id             Int         @id @default(autoincrement())
+  ma_giam_gia_id Int
+  nguoi_dung_id  Int
+  don_hang_id    Int
+  so_tien_giam   Int
+  used_at        DateTime?   @default(now()) @db.Timestamp(6)
+  don_hang       don_hang    @relation(fields: [don_hang_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vu_don_hang")
+  ma_giam_gia    ma_giam_gia @relation(fields: [ma_giam_gia_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vu_ma_giam_gia")
+  nguoi_dung     nguoi_dung  @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vu_nguoi_dung")
+
+  @@index([ma_giam_gia_id, nguoi_dung_id], map: "idx_voucher_usage")
+  @@index([don_hang_id], map: "idx_voucher_usage_don_hang")
+}
+
+model wards {
+  code                   String                @id @db.VarChar(20)
+  name                   String                @db.VarChar(255)
+  name_en                String?               @db.VarChar(255)
+  full_name              String?               @db.VarChar(255)
+  full_name_en           String?               @db.VarChar(255)
+  code_name              String?               @db.VarChar(255)
+  province_code          String?               @db.VarChar(20)
+  administrative_unit_id Int?
+  dia_chi                dia_chi[]
+  administrative_units   administrative_units? @relation(fields: [administrative_unit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  provinces              provinces?            @relation(fields: [province_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([province_code], map: "idx_wards_province")
+  @@index([administrative_unit_id], map: "idx_wards_unit")
+}
+
+model yeu_thich {
+  id                 Int                  @id @default(autoincrement())
+  nguoi_dung_id      Int                  @unique(map: "unique_yeu_thich_nguoi_dung")
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  chi_tiet_yeu_thich chi_tiet_yeu_thich[]
+  nguoi_dung         nguoi_dung           @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_yt_nguoi_dung")
+
+  @@index([nguoi_dung_id], map: "idx_yeu_thich_nguoi_dung")
+}
